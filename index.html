@@ -32,7 +32,7 @@
             margin-bottom: 5px;
             font-weight: bold;
         }
-        input {
+        input, button {
             width: 100%;
             padding: 10px;
             font-size: 1rem;
@@ -45,11 +45,6 @@
             color: white;
             cursor: pointer;
             border: none;
-            padding: 10px;
-            width: 100%;
-            font-size: 1rem;
-            border-radius: 4px;
-            margin-bottom: 10px;
         }
         button:hover {
             background-color: #2980b9;
@@ -100,7 +95,6 @@
                 <input type="text" id="realDuration" placeholder="Gib die reale Fahrtdauer ein">
             </div>
             <button onclick="addEntry()">Neuen Eintrag hinzufügen</button>
-            <button onclick="loadEntries()">Logbuch laden</button>
         </div>
 
         <div id="logEntries"></div>
