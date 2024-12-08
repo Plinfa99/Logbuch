@@ -68,9 +68,6 @@
             margin-bottom: 10px;
             border-radius: 4px;
         }
-        .hidden {
-            display: none;
-        }
     </style>
 </head>
 <body>
@@ -103,6 +100,7 @@
                 <input type="text" id="realDuration" placeholder="Gib die reale Fahrtdauer ein">
             </div>
             <button onclick="addEntry()">Neuen Eintrag hinzufügen</button>
+            <button onclick="loadEntries()">Logbuch laden</button>
         </div>
 
         <div id="logEntries"></div>
@@ -110,12 +108,26 @@
     </div>
 
     <script>
-        let entries = JSON.parse(localStorage.getItem('entries')) || [];
+        const API_KEY = '$2a$10$aDn6R0chjz2qLH39VbVUCOzcFGMUYb0KzfVDa3yQPQHyyD4I8C0My';
+        const BIN_ID = '675586a2acd3cb34a8b611cd';
+        const BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
-        function displayEntries() {
+        async function loadEntries() {
+            try {
+                const response = await fetch(BASE_URL, {
+                    headers: { 'X-Master-Key': API_KEY }
+                });
+                const data = await response.json();
+                displayEntries(data.record);
+            } catch (error) {
+                console.error('Fehler beim Laden der Einträge:', error);
+            }
+        }
+
+        function displayEntries(entries) {
             const logEntriesDiv = document.getElementById('logEntries');
             logEntriesDiv.innerHTML = '';
-            entries.forEach((entry, index) => {
+            entries.forEach(entry => {
                 logEntriesDiv.innerHTML += `
                     <div class="log-entry">
                         <p><strong>Datum:</strong> ${entry.date}</p>
@@ -124,13 +136,12 @@
                         <p><strong>Meist gehörter Song:</strong> ${entry.song}</p>
                         <p><strong>Fahrtdauer (geplant):</strong> ${entry.plannedDuration}</p>
                         <p><strong>Fahrtdauer (real):</strong> ${entry.realDuration}</p>
-                        <button class="delete-button" onclick="deleteEntry(${index})">Löschen</button>
                     </div>
                 `;
             });
         }
 
-        function addEntry() {
+        async function addEntry() {
             const date = document.getElementById('date').value;
             const destination = document.getElementById('destination').value.trim();
             const passengers = document.getElementById('passengers').value.trim();
@@ -143,49 +154,28 @@
                 return;
             }
 
-            entries.push({ date, destination, passengers, song, plannedDuration, realDuration });
-            localStorage.setItem('entries', JSON.stringify(entries));
-            displayEntries();
-            clearForm();
-        }
+            const newEntry = { date, destination, passengers, song, plannedDuration, realDuration };
 
-        function deleteEntry(index) {
-            if (confirm('Möchtest du diesen Eintrag wirklich löschen?')) {
-                entries.splice(index, 1);
-                localStorage.setItem('entries', JSON.stringify(entries));
-                displayEntries();
+            try {
+                const response = await fetch(BASE_URL, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': API_KEY
+                    },
+                    body: JSON.stringify([newEntry])
+                });
+
+                if (response.ok) {
+                    alert('Eintrag erfolgreich hinzugefügt!');
+                    loadEntries();
+                }
+            } catch (error) {
+                console.error('Fehler beim Hinzufügen des Eintrags:', error);
             }
         }
 
-        function exportLog() {
-            let content = '';
-            entries.forEach(entry => {
-                content += `Datum: ${entry.date}\n`;
-                content += `Fahrziel: ${entry.destination}\n`;
-                content += `Mitfahrer:innen: ${entry.passengers}\n`;
-                content += `Meist gehörter Song: ${entry.song}\n`;
-                content += `Fahrtdauer (geplant): ${entry.plannedDuration}\n`;
-                content += `Fahrtdauer (real): ${entry.realDuration}\n\n`;
-            });
-
-            const blob = new Blob([content], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'fahrten_logbuch.txt';
-            a.click();
-        }
-
-        function clearForm() {
-            document.getElementById('date').value = '';
-            document.getElementById('destination').value = '';
-            document.getElementById('passengers').value = '';
-            document.getElementById('song').value = '';
-            document.getElementById('plannedDuration').value = '';
-            document.getElementById('realDuration').value = '';
-        }
-
-        displayEntries();
+        loadEntries();
     </script>
 </body>
 </html>
