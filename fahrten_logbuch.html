@@ -1,0 +1,191 @@
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fahrten-Logbuch</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            cursor: pointer;
+            border: none;
+            padding: 10px;
+            width: 100%;
+            font-size: 1rem;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .delete-button {
+            background-color: #e74c3c;
+            padding: 5px 10px;
+            width: auto;
+        }
+        .delete-button:hover {
+            background-color: #c0392b;
+        }
+        .log-entry {
+            padding: 10px;
+            background: #e9ecef;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Fahrten-Logbuch</h1>
+
+        <div id="entry-form">
+            <div class="form-group">
+                <label for="date">Datum:</label>
+                <input type="date" id="date">
+            </div>
+            <div class="form-group">
+                <label for="destination">Fahrziel:</label>
+                <input type="text" id="destination" placeholder="Gib das Fahrziel ein">
+            </div>
+            <div class="form-group">
+                <label for="passengers">Mitfahrer:innen:</label>
+                <input type="text" id="passengers" placeholder="Gib die Mitfahrer:innen ein">
+            </div>
+            <div class="form-group">
+                <label for="song">Meist gehörter Song:</label>
+                <input type="text" id="song" placeholder="Gib den Song ein">
+            </div>
+            <div class="form-group">
+                <label for="plannedDuration">Fahrtdauer (geplant):</label>
+                <input type="text" id="plannedDuration" placeholder="Gib die geplante Fahrtdauer ein">
+            </div>
+            <div class="form-group">
+                <label for="realDuration">Fahrtdauer (real):</label>
+                <input type="text" id="realDuration" placeholder="Gib die reale Fahrtdauer ein">
+            </div>
+            <button onclick="addEntry()">Neuen Eintrag hinzufügen</button>
+        </div>
+
+        <div id="logEntries"></div>
+        <button onclick="exportLog()">Logbuch als TXT exportieren</button>
+    </div>
+
+    <script>
+        let entries = JSON.parse(localStorage.getItem('entries')) || [];
+
+        function displayEntries() {
+            const logEntriesDiv = document.getElementById('logEntries');
+            logEntriesDiv.innerHTML = '';
+            entries.forEach((entry, index) => {
+                logEntriesDiv.innerHTML += `
+                    <div class="log-entry">
+                        <p><strong>Datum:</strong> ${entry.date}</p>
+                        <p><strong>Fahrziel:</strong> ${entry.destination}</p>
+                        <p><strong>Mitfahrer:innen:</strong> ${entry.passengers}</p>
+                        <p><strong>Meist gehörter Song:</strong> ${entry.song}</p>
+                        <p><strong>Fahrtdauer (geplant):</strong> ${entry.plannedDuration}</p>
+                        <p><strong>Fahrtdauer (real):</strong> ${entry.realDuration}</p>
+                        <button class="delete-button" onclick="deleteEntry(${index})">Löschen</button>
+                    </div>
+                `;
+            });
+        }
+
+        function addEntry() {
+            const date = document.getElementById('date').value;
+            const destination = document.getElementById('destination').value.trim();
+            const passengers = document.getElementById('passengers').value.trim();
+            const song = document.getElementById('song').value.trim();
+            const plannedDuration = document.getElementById('plannedDuration').value.trim();
+            const realDuration = document.getElementById('realDuration').value.trim();
+
+            if (!date || !destination || !plannedDuration || !realDuration) {
+                alert('Bitte fülle alle erforderlichen Felder aus.');
+                return;
+            }
+
+            entries.push({ date, destination, passengers, song, plannedDuration, realDuration });
+            localStorage.setItem('entries', JSON.stringify(entries));
+            displayEntries();
+            clearForm();
+        }
+
+        function deleteEntry(index) {
+            if (confirm('Möchtest du diesen Eintrag wirklich löschen?')) {
+                entries.splice(index, 1);
+                localStorage.setItem('entries', JSON.stringify(entries));
+                displayEntries();
+            }
+        }
+
+        function exportLog() {
+            let content = '';
+            entries.forEach(entry => {
+                content += `Datum: ${entry.date}\n`;
+                content += `Fahrziel: ${entry.destination}\n`;
+                content += `Mitfahrer:innen: ${entry.passengers}\n`;
+                content += `Meist gehörter Song: ${entry.song}\n`;
+                content += `Fahrtdauer (geplant): ${entry.plannedDuration}\n`;
+                content += `Fahrtdauer (real): ${entry.realDuration}\n\n`;
+            });
+
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'fahrten_logbuch.txt';
+            a.click();
+        }
+
+        function clearForm() {
+            document.getElementById('date').value = '';
+            document.getElementById('destination').value = '';
+            document.getElementById('passengers').value = '';
+            document.getElementById('song').value = '';
+            document.getElementById('plannedDuration').value = '';
+            document.getElementById('realDuration').value = '';
+        }
+
+        displayEntries();
+    </script>
+</body>
+</html>
