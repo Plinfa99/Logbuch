@@ -100,104 +100,106 @@
         <div id="logEntries"></div>
         <button onclick="exportLog()">Logbuch als TXT exportieren</button>
     </div>
-function exportLog() {
-    const logEntriesDiv = document.getElementById('logEntries');
-    const logEntries = logEntriesDiv.querySelectorAll('.log-entry');
     
-    if (logEntries.length === 0) {
-        alert('Keine Einträge zum Exportieren vorhanden.');
-        return;
+<script>
+    const API_KEY = '$2a$10$aDn6R0chjz2qLH39VbVUCOzcFGMUYb0KzfVDa3yQPQHyyD4I8C0My';
+    const BIN_ID = '675586a2acd3cb34a8b611cd';
+    const BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+
+    async function loadEntries() {
+        try {
+            const response = await fetch(BASE_URL, {
+                headers: { 'X-Master-Key': API_KEY }
+            });
+            const data = await response.json();
+            displayEntries(data.record);
+        } catch (error) {
+            console.error('Fehler beim Laden der Einträge:', error);
+        }
     }
 
-    let txtContent = '';
+    function displayEntries(entries) {
+        const logEntriesDiv = document.getElementById('logEntries');
+        logEntriesDiv.innerHTML = '';
+        entries.forEach(entry => {
+            logEntriesDiv.innerHTML += `
+                <div class="log-entry">
+                    <p><strong>Datum:</strong> ${entry.date}</p>
+                    <p><strong>Fahrziel:</strong> ${entry.destination}</p>
+                    <p><strong>Mitfahrer:innen:</strong> ${entry.passengers}</p>
+                    <p><strong>Meist gehörter Song:</strong> ${entry.song}</p>
+                    <p><strong>Fahrtdauer (geplant):</strong> ${entry.plannedDuration}</p>
+                    <p><strong>Fahrtdauer (real):</strong> ${entry.realDuration}</p>
+                </div>
+            `;
+        });
+    }
 
-    logEntries.forEach(entry => {
-        txtContent += entry.innerText + '\n\n';
-    });
+    async function addEntry() {
+        const date = document.getElementById('date').value;
+        const destination = document.getElementById('destination').value.trim();
+        const passengers = document.getElementById('passengers').value.trim();
+        const song = document.getElementById('song').value.trim();
+        const plannedDuration = document.getElementById('plannedDuration').value.trim();
+        const realDuration = document.getElementById('realDuration').value.trim();
 
-    // Erstellen eines Blob-Objekts
-    const blob = new Blob([txtContent], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-
-    // Erstellen eines temporären Download-Links
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'fahrten_logbuch.txt';
-    a.click();
-
-    // Freigeben des Blob-Objekts
-    URL.revokeObjectURL(url);
-}
-
-    <script>
-        const API_KEY = '$2a$10$aDn6R0chjz2qLH39VbVUCOzcFGMUYb0KzfVDa3yQPQHyyD4I8C0My';
-        const BIN_ID = '675586a2acd3cb34a8b611cd';
-        const BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
-
-        async function loadEntries() {
-            try {
-                const response = await fetch(BASE_URL, {
-                    headers: { 'X-Master-Key': API_KEY }
-                });
-                const data = await response.json();
-                displayEntries(data.record);
-            } catch (error) {
-                console.error('Fehler beim Laden der Einträge:', error);
-            }
+        if (!date || !destination || !plannedDuration || !realDuration) {
+            alert('Bitte fülle alle erforderlichen Felder aus.');
+            return;
         }
 
-        function displayEntries(entries) {
-            const logEntriesDiv = document.getElementById('logEntries');
-            logEntriesDiv.innerHTML = '';
-            entries.forEach(entry => {
-                logEntriesDiv.innerHTML += `
-                    <div class="log-entry">
-                        <p><strong>Datum:</strong> ${entry.date}</p>
-                        <p><strong>Fahrziel:</strong> ${entry.destination}</p>
-                        <p><strong>Mitfahrer:innen:</strong> ${entry.passengers}</p>
-                        <p><strong>Meist gehörter Song:</strong> ${entry.song}</p>
-                        <p><strong>Fahrtdauer (geplant):</strong> ${entry.plannedDuration}</p>
-                        <p><strong>Fahrtdauer (real):</strong> ${entry.realDuration}</p>
-                    </div>
-                `;
+        const newEntry = { date, destination, passengers, song, plannedDuration, realDuration };
+
+        try {
+            const response = await fetch(BASE_URL, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': API_KEY
+                },
+                body: JSON.stringify([newEntry])
             });
+
+            if (response.ok) {
+                alert('Eintrag erfolgreich hinzugefügt!');
+                loadEntries();
+            }
+        } catch (error) {
+            console.error('Fehler beim Hinzufügen des Eintrags:', error);
+        }
+    }
+
+    function exportLog() {
+        const logEntriesDiv = document.getElementById('logEntries');
+        const logEntries = logEntriesDiv.querySelectorAll('.log-entry');
+        
+        if (logEntries.length === 0) {
+            alert('Keine Einträge zum Exportieren vorhanden.');
+            return;
         }
 
-        async function addEntry() {
-            const date = document.getElementById('date').value;
-            const destination = document.getElementById('destination').value.trim();
-            const passengers = document.getElementById('passengers').value.trim();
-            const song = document.getElementById('song').value.trim();
-            const plannedDuration = document.getElementById('plannedDuration').value.trim();
-            const realDuration = document.getElementById('realDuration').value.trim();
+        let txtContent = '';
 
-            if (!date || !destination || !plannedDuration || !realDuration) {
-                alert('Bitte fülle alle erforderlichen Felder aus.');
-                return;
-            }
+        logEntries.forEach(entry => {
+            txtContent += entry.innerText + '\n\n';
+        });
 
-            const newEntry = { date, destination, passengers, song, plannedDuration, realDuration };
+        // Erstellen eines Blob-Objekts
+        const blob = new Blob([txtContent], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
 
-            try {
-                const response = await fetch(BASE_URL, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Master-Key': API_KEY
-                    },
-                    body: JSON.stringify([newEntry])
-                });
+        // Erstellen eines temporären Download-Links
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'fahrten_logbuch.txt';
+        a.click();
 
-                if (response.ok) {
-                    alert('Eintrag erfolgreich hinzugefügt!');
-                    loadEntries();
-                }
-            } catch (error) {
-                console.error('Fehler beim Hinzufügen des Eintrags:', error);
-            }
-        }
+        // Freigeben des Blob-Objekts
+        URL.revokeObjectURL(url);
+    }
 
-        loadEntries();
-    </script>
+    loadEntries();
+</script>
+
 </body>
 </html>
