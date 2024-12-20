@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -192,7 +191,9 @@
         const a = document.createElement('a');
         a.href = url;
         a.download = 'fahrten_logbuch.txt';
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
 
         // Freigeben des Blob-Objekts
         URL.revokeObjectURL(url);
