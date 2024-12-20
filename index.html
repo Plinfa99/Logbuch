@@ -100,6 +100,34 @@
         <div id="logEntries"></div>
         <button onclick="exportLog()">Logbuch als TXT exportieren</button>
     </div>
+function exportLog() {
+    const logEntriesDiv = document.getElementById('logEntries');
+    const logEntries = logEntriesDiv.querySelectorAll('.log-entry');
+    
+    if (logEntries.length === 0) {
+        alert('Keine Einträge zum Exportieren vorhanden.');
+        return;
+    }
+
+    let txtContent = '';
+
+    logEntries.forEach(entry => {
+        txtContent += entry.innerText + '\n\n';
+    });
+
+    // Erstellen eines Blob-Objekts
+    const blob = new Blob([txtContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+
+    // Erstellen eines temporären Download-Links
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'fahrten_logbuch.txt';
+    a.click();
+
+    // Freigeben des Blob-Objekts
+    URL.revokeObjectURL(url);
+}
 
     <script>
         const API_KEY = '$2a$10$aDn6R0chjz2qLH39VbVUCOzcFGMUYb0KzfVDa3yQPQHyyD4I8C0My';
