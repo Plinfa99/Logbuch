@@ -98,6 +98,7 @@
 
         <div id="logEntries"></div>
         <button onclick="exportLog()">Logbuch als TXT exportieren</button>
+        <button class="delete-button" onclick="deleteAllEntries()">Alle Einträge löschen</button>
     </div>
     
 <script>
@@ -168,6 +169,26 @@
         }
     }
 
+    async function deleteAllEntries() {
+        try {
+            const response = await fetch(BASE_URL, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': API_KEY
+                },
+                body: JSON.stringify([])
+            });
+
+            if (response.ok) {
+                alert('Alle Einträge wurden gelöscht.');
+                loadEntries();
+            }
+        } catch (error) {
+            console.error('Fehler beim Löschen der Einträge:', error);
+        }
+    }
+
     function exportLog() {
         const logEntriesDiv = document.getElementById('logEntries');
         const logEntries = logEntriesDiv.querySelectorAll('.log-entry');
@@ -183,11 +204,9 @@
             txtContent += entry.innerText + '\n\n';
         });
 
-        // Erstellen eines Blob-Objekts
         const blob = new Blob([txtContent], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
 
-        // Erstellen eines temporären Download-Links
         const a = document.createElement('a');
         a.href = url;
         a.download = 'fahrten_logbuch.txt';
@@ -195,7 +214,6 @@
         a.click();
         document.body.removeChild(a);
 
-        // Freigeben des Blob-Objekts
         URL.revokeObjectURL(url);
     }
 
@@ -204,3 +222,4 @@
 
 </body>
 </html>
+
