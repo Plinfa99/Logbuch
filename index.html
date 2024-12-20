@@ -112,7 +112,7 @@
                 headers: { 'X-Master-Key': API_KEY }
             });
             const data = await response.json();
-            displayEntries(data.record);
+            displayEntries(data.record || []);
         } catch (error) {
             console.error('Fehler beim Laden der Einträge:', error);
         }
@@ -121,7 +121,7 @@
     function displayEntries(entries) {
         const logEntriesDiv = document.getElementById('logEntries');
         logEntriesDiv.innerHTML = '';
-        entries.forEach(entry => {
+        entries.forEach((entry, index) => {
             logEntriesDiv.innerHTML += `
                 <div class="log-entry">
                     <p><strong>Datum:</strong> ${entry.date}</p>
@@ -130,6 +130,7 @@
                     <p><strong>Meist gehörter Song:</strong> ${entry.song}</p>
                     <p><strong>Fahrtdauer (geplant):</strong> ${entry.plannedDuration}</p>
                     <p><strong>Fahrtdauer (real):</strong> ${entry.realDuration}</p>
+                    <button class="delete-button" onclick="deleteEntry(${index})">Eintrag löschen</button>
                 </div>
             `;
         });
@@ -152,20 +153,51 @@
 
         try {
             const response = await fetch(BASE_URL, {
+                headers: { 'X-Master-Key': API_KEY }
+            });
+            const data = await response.json();
+            const updatedEntries = data.record || [];
+            updatedEntries.push(newEntry);
+
+            await fetch(BASE_URL, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-Master-Key': API_KEY
                 },
-                body: JSON.stringify([newEntry])
+                body: JSON.stringify(updatedEntries)
             });
 
-            if (response.ok) {
-                alert('Eintrag erfolgreich hinzugefügt!');
-                loadEntries();
-            }
+            alert('Eintrag erfolgreich hinzugefügt!');
+            loadEntries();
         } catch (error) {
             console.error('Fehler beim Hinzufügen des Eintrags:', error);
+        }
+    }
+
+    async function deleteEntry(index) {
+        try {
+            const response = await fetch(BASE_URL, {
+                headers: { 'X-Master-Key': API_KEY }
+            });
+            const data = await response.json();
+            const entries = data.record || [];
+
+            entries.splice(index, 1);
+
+            await fetch(BASE_URL, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': API_KEY
+                },
+                body: JSON.stringify(entries)
+            });
+
+            alert('Eintrag wurde gelöscht.');
+            loadEntries();
+        } catch (error) {
+            console.error('Fehler beim Löschen des Eintrags:', error);
         }
     }
 
@@ -222,4 +254,5 @@
 
 </body>
 </html>
+
 
